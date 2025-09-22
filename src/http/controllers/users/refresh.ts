@@ -1,0 +1,38 @@
+import type { FastifyRequest, FastifyReply } from 'fastify'
+
+export async function refresh(request: FastifyRequest, reply: FastifyReply) {
+  await request.jwtVerify({ onlyCookie: true })
+
+  const { role } = request.user
+
+  const token = await reply.jwtSign(
+    { role },
+    {
+      sign: {
+        sub: request.user.sub,
+      },
+    },
+  )
+
+  const refreshToken = await reply.jwtSign(
+    { role },
+    {
+      sign: {
+        sub: request.user.sub,
+        expiresIn: '7d', // 7 days
+      },
+    },
+  )
+
+  return reply
+    .setCookie('refreshToken', refreshToken, {
+      path: '/',
+      secure: true, // encrypt via HTTPS -> the frontend cannot read this information directly
+      sameSite: true, // available only on the same domain
+      httpOnly: true, // can only be accessed by the backend -> request context
+    })
+    .status(200)
+    .send({
+      token,
+    })
+}

@@ -19,7 +19,7 @@ export async function authenticate(
     const { user } = await authenticateUseCase.execute({ email, password })
 
     const token = await reply.jwtSign(
-      {},
+      { role: user.role },
       {
         sign: {
           sub: user.id,
@@ -28,7 +28,7 @@ export async function authenticate(
     )
 
     const refreshToken = await reply.jwtSign(
-      {},
+      { role: user.role },
       {
         sign: {
           sub: user.id,
@@ -40,9 +40,9 @@ export async function authenticate(
     return reply
       .setCookie('refreshToken', refreshToken, {
         path: '/',
-        secure: true, // encriptar atraves de https -> frontend nao consegue ler essa info de forma bruta
-        sameSite: true, // disponivel somente no mesmo dominio
-        httpOnly: true, // so pode ser acessado pelo backend -> contexto da requisição
+        secure: true, // encrypt via HTTPS -> the frontend cannot read this information directly
+        sameSite: true, // available only on the same domain
+        httpOnly: true, // can only be accessed by the backend -> request context
       })
       .status(200)
       .send({
@@ -54,6 +54,4 @@ export async function authenticate(
     }
     throw error
   }
-
-  return reply.status(200).send()
 }
